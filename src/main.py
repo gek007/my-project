@@ -1,7 +1,43 @@
 import re
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
 
 def main():
-    print("Hello, World!")
+    """Start a simple HTTP server that responds to GET / with 'Hello Kostya'.
+
+    The server only starts when this module is executed as a script so importing
+    `src.main` in tests doesn't start the server.
+    """
+    host = "0.0.0.0"
+    port = 8000
+
+    class HelloHandler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            if self.path == "/":
+                body = "Hello Kostya".encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "text/plain; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+            else:
+                self.send_response(404)
+                self.send_header("Content-Type", "text/plain; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(b"Not Found")
+
+        # silence logging to keep output clean during tests/runs
+        def log_message(self, format, *args):
+            return
+
+    server = ThreadingHTTPServer((host, port), HelloHandler)
+    print(f"Starting HTTP server at http://{host}:{port} (GET / returns 'Hello Kostya')")
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
 
 
 def is_valid_email(email):
